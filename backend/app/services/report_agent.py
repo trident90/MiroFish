@@ -652,9 +652,9 @@ DO focus on "what will the future look like" — the simulation results ARE the 
    - These quotes are the core evidence of simulation predictions
 
 3. [Language Consistency - Quoted Content Must Be Translated to the Report Language]
-   - Content returned by tools may contain English or mixed Chinese-English expressions
-   - If the simulation requirements and original materials are in Chinese, the report must be written entirely in Chinese
-   - When quoting English or mixed Chinese-English content returned by tools, you must translate it into fluent Chinese before writing it into the report
+   - Content returned by tools may contain mixed-language expressions
+   - The report must be written entirely in English
+   - When quoting content returned by tools, ensure it is in fluent English before writing it into the report
    - Maintain the original meaning during translation, ensuring natural and smooth expression
    - This rule applies to both body text and quote blocks (> format)
 
