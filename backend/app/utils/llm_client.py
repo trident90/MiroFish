@@ -63,6 +63,9 @@ class LLMClient:
         
         response = self.client.chat.completions.create(**kwargs)
         content = response.choices[0].message.content
+        # Some reasoning models (e.g., Qwen3) return content as None, with reasoning in a separate field
+        if content is None:
+            content = ""
         # Some models (e.g., MiniMax M2.5) include <think> reasoning content in the response, which needs to be removed
         content = re.sub(r'<think>[\s\S]*?</think>', '', content).strip()
         return content
