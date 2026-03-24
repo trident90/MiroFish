@@ -1,0 +1,50 @@
+# Docker Compose for on-premise deployment (Graphiti + Neo4j)
+# Usage: docker compose -f docker-compose.onpremise.yml up -d
+#
+# This replaces Zep Cloud with local Graphiti + Neo4j.
+# Set GRAPH_BACKEND=graphiti in .env to activate.
+
+services:
+  neo4j:
+    image: neo4j:5.26-community
+    container_name: mirofish-neo4j
+    restart: unless-stopped
+    ports:
+      - "7474:7474"   # Browser UI
+      - "7687:7687"   # Bolt protocol
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD:-mirofish2026}
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_dbms_memory_heap_initial__size=512m
+      - NEO4J_dbms_memory_heap_max__size=2g
+      - NEO4J_dbms_memory_pagecache_size=1g
+    healthcheck:
+      test: ["CMD", "neo4j", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  graphiti:
+    image: zepai/graphiti:latest
+    container_name: mirofish-graphiti
+    restart: unless-stopped
+    ports:
+      - "8002:8000"
+    environment:
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-mirofish2026}
+      # Point to local LLM (vLLM) for NER/RE extraction
+      - OPENAI_API_KEY=dummy
+      - OPENAI_BASE_URL=${LLM_BASE_URL:-http://host.docker.internal:8001/v1}
+      - MODEL_NAME=${LLM_MODEL_NAME:-Qwen/Qwen3-32B}
+    depends_on:
+      neo4j:
+        condition: service_healthy
+
+volumes:
+  neo4j_data:
+  neo4j_logs:

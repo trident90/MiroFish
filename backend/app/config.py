@@ -32,8 +32,18 @@ class Config:
     LLM_BASE_URL = os.environ.get('LLM_BASE_URL', 'https://api.openai.com/v1')
     LLM_MODEL_NAME = os.environ.get('LLM_MODEL_NAME', 'gpt-4o-mini')
 
-    # Zep configuration
+    # Graph storage backend ('zep' or 'graphiti')
+    GRAPH_BACKEND = os.environ.get('GRAPH_BACKEND', 'zep')
+
+    # Zep Cloud configuration (when GRAPH_BACKEND=zep)
     ZEP_API_KEY = os.environ.get('ZEP_API_KEY')
+
+    # Graphiti + Neo4j configuration (when GRAPH_BACKEND=graphiti)
+    GRAPHITI_URL = os.environ.get('GRAPHITI_URL', 'http://localhost:8002')
+    NEO4J_URI = os.environ.get('NEO4J_URI', 'bolt://localhost:7687')
+    NEO4J_USER = os.environ.get('NEO4J_USER', 'neo4j')
+    NEO4J_PASSWORD = os.environ.get('NEO4J_PASSWORD', '')
+    EMBEDDING_API_URL = os.environ.get('EMBEDDING_API_URL', '')
 
     # File upload configuration
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB
@@ -69,6 +79,8 @@ class Config:
         errors = []
         if not cls.LLM_API_KEY:
             errors.append("LLM_API_KEY not configured")
-        if not cls.ZEP_API_KEY:
-            errors.append("ZEP_API_KEY not configured")
+        if cls.GRAPH_BACKEND == 'zep' and not cls.ZEP_API_KEY:
+            errors.append("ZEP_API_KEY not configured (required when GRAPH_BACKEND=zep)")
+        if cls.GRAPH_BACKEND == 'graphiti' and not cls.NEO4J_PASSWORD:
+            errors.append("NEO4J_PASSWORD not configured (required when GRAPH_BACKEND=graphiti)")
         return errors
