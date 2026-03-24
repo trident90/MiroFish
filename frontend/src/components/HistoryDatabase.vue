@@ -13,7 +13,7 @@
     <!-- Title Area -->
     <div class="section-header">
       <div class="section-line"></div>
-      <span class="section-title">Simulation Records</span>
+      <span class="section-title">{{ t('history.title') }}</span>
       <div class="section-line"></div>
     </div>
 
@@ -36,16 +36,16 @@
             <span 
               class="status-icon" 
               :class="{ available: project.project_id, unavailable: !project.project_id }"
-              title="Graph Construction"
+              :title="t('history.graphConstruction')"
             >◇</span>
             <span 
               class="status-icon available" 
-              title="Environment Setup"
+              :title="t('history.envSetup')"
             >◈</span>
             <span 
               class="status-icon" 
               :class="{ available: project.report_id, unavailable: !project.report_id }"
-              title="Analysis Report"
+              :title="t('history.analysisReport')"
             >◆</span>
           </div>
         </div>
@@ -67,13 +67,13 @@
             </div>
             <!-- If more files, show hint -->
             <div v-if="project.files.length > 3" class="files-more">
-              +{{ project.files.length - 3 }} files
+              +{{ project.files.length - 3 }} {{ t('history.files') }}
             </div>
           </div>
           <!-- Placeholder when no files -->
           <div class="files-empty" v-else>
             <span class="empty-file-icon">◇</span>
-            <span class="empty-file-text">No files</span>
+            <span class="empty-file-text">{{ t('history.noFiles') }}</span>
           </div>
         </div>
 
@@ -102,7 +102,7 @@
     <!-- Loading State -->
     <div v-if="loading" class="loading-state">
       <span class="loading-spinner"></span>
-      <span class="loading-text">Loading...</span>
+      <span class="loading-text">{{ t('history.loading') }}</span>
     </div>
 
     <!-- History Replay Detail Modal -->
@@ -126,27 +126,27 @@
             <div class="modal-body">
               <!-- Simulation Requirement -->
               <div class="modal-section">
-                <div class="modal-label">Simulation Requirement</div>
-                <div class="modal-requirement">{{ selectedProject.simulation_requirement || 'None' }}</div>
+                <div class="modal-label">{{ t('history.simRequirement') }}</div>
+                <div class="modal-requirement">{{ selectedProject.simulation_requirement || t('history.none') }}</div>
               </div>
 
               <!-- File List -->
               <div class="modal-section">
-                <div class="modal-label">Associated Files</div>
+                <div class="modal-label">{{ t('history.associatedFiles') }}</div>
                 <div class="modal-files" v-if="selectedProject.files && selectedProject.files.length > 0">
                   <div v-for="(file, index) in selectedProject.files" :key="index" class="modal-file-item">
                     <span class="file-tag" :class="getFileType(file.filename)">{{ getFileTypeLabel(file.filename) }}</span>
                     <span class="modal-file-name">{{ file.filename }}</span>
                   </div>
                 </div>
-                <div class="modal-empty" v-else>No associated files</div>
+                <div class="modal-empty" v-else>{{ t('history.noAssociatedFiles') }}</div>
               </div>
             </div>
 
             <!-- Simulation Replay Divider -->
             <div class="modal-divider">
               <span class="divider-line"></span>
-              <span class="divider-text">Simulation Replay</span>
+              <span class="divider-text">{{ t('history.simReplay') }}</span>
               <span class="divider-line"></span>
             </div>
 
@@ -157,31 +157,31 @@
                 @click="goToProject"
                 :disabled="!selectedProject.project_id"
               >
-                <span class="btn-step">Step1</span>
+                <span class="btn-step">{{ t('history.step1') }}</span>
                 <span class="btn-icon">◇</span>
-                <span class="btn-text">Graph Build</span>
+                <span class="btn-text">{{ t('history.graphBuild') }}</span>
               </button>
               <button 
                 class="modal-btn btn-simulation" 
                 @click="goToSimulation"
               >
-                <span class="btn-step">Step2</span>
+                <span class="btn-step">{{ t('history.step2') }}</span>
                 <span class="btn-icon">◈</span>
-                <span class="btn-text">Env Setup</span>
+                <span class="btn-text">{{ t('history.envSetupBtn') }}</span>
               </button>
               <button 
                 class="modal-btn btn-report" 
                 @click="goToReport"
                 :disabled="!selectedProject.report_id"
               >
-                <span class="btn-step">Step4</span>
+                <span class="btn-step">{{ t('history.step4') }}</span>
                 <span class="btn-icon">◆</span>
-                <span class="btn-text">Analysis Report</span>
+                <span class="btn-text">{{ t('history.analysisReportBtn') }}</span>
               </button>
             </div>
             <!-- Non-replayable Hint -->
             <div class="modal-playback-hint">
-              <span class="hint-text">Step3 "Start Simulation" and Step5 "Deep Interaction" require a live run and do not support historical replay</span>
+              <span class="hint-text">{{ t('history.replayHint') }}</span>
             </div>
           </div>
         </div>
@@ -194,6 +194,9 @@
 import { ref, computed, onMounted, onUnmounted, onActivated, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getSimulationHistory } from '../api/simulation'
+import { useI18n } from '../i18n'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const route = useRoute()

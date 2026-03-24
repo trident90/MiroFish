@@ -2,11 +2,15 @@
   <div class="home-container">
     <!-- Top Navigation Bar -->
     <nav class="navbar">
-      <div class="nav-brand">MIROFISH</div>
+      <div class="nav-brand">{{ t('nav.brand') }}</div>
       <div class="nav-links">
         <a href="https://github.com/666ghj/MiroFish" target="_blank" class="github-link">
-          Visit Our Github Homepage <span class="arrow">↗</span>
+          {{ t('nav.github') }} <span class="arrow">↗</span>
         </a>
+        <div class="lang-switcher">
+          <button :class="{ active: locale === 'en' }" @click="setLocale('en')">EN</button>
+          <button :class="{ active: locale === 'ko' }" @click="setLocale('ko')">KO</button>
+        </div>
       </div>
     </nav>
 
@@ -14,22 +18,20 @@
       <!-- Upper Section: Hero Area -->
       <section class="hero-section">
         <div class="hero-left">
-          <div class="tag-row">
-            <span class="orange-tag">A Concise and Universal Swarm Intelligence Engine</span>
-            <span class="version-text">/ v0.1-Preview</span>
+          <div class=”tag-row”>
+            <span class=”orange-tag”>{{ t('home.tagline') }}</span>
+            <span class=”version-text”>{{ t('home.version') }}</span>
           </div>
-          
-          <h1 class="main-title">
-            Upload Any Report<br>
-            <span class="gradient-text">Simulate the Future Instantly</span>
+
+          <h1 class=”main-title”>
+            {{ t('home.title.line1') }}<br>
+            <span class=”gradient-text”>{{ t('home.title.line2') }}</span>
           </h1>
-          
-          <div class="hero-desc">
-            <p>
-              Even with just a piece of text, <span class=”highlight-bold”>MiroFish</span> can automatically generate a parallel world composed of up to <span class=”highlight-orange”>millions of Agents</span> based on the reality seeds within it. Inject variables from a god's-eye view and find the <span class=”highlight-code”>”local optimum”</span> in dynamic environments through complex swarm interactions.
-            </p>
-            <p class="slogan-text">
-              Let the future rehearse among Agents, let decisions prevail after a hundred battles<span class="blinking-cursor">_</span>
+
+          <div class=”hero-desc”>
+            <p>{{ t('home.desc.text1') }} <b>MiroFish</b> {{ t('home.desc.text2') }} <span class=”highlight-orange”>{{ t('home.desc.agents') }}</span> {{ t('home.desc.text3') }} <span class=”highlight-code”>{{ t('home.desc.optimum') }}</span> {{ t('home.desc.text4') }}</p>
+            <p class=”slogan-text”>
+              {{ t('home.desc.slogan') }}<span class=”blinking-cursor”>_</span>
             </p>
           </div>
            
@@ -53,65 +55,65 @@
         <!-- Left Column: Status and Steps -->
         <div class="left-panel">
           <div class="panel-header">
-            <span class="status-dot">■</span> System Status
+            <span class="status-dot">■</span> {{ t('home.systemStatus') }}
           </div>
-          
-          <h2 class="section-title">Ready</h2>
+
+          <h2 class="section-title">{{ t('home.statusReady') }}</h2>
           <p class="section-desc">
-            Prediction engine on standby. Upload multiple unstructured data files to initialize simulation sequences.
+            {{ t('home.statusDesc') }}
           </p>
-          
+
           <!-- Data Metric Cards -->
           <div class="metrics-row">
             <div class="metric-card">
-              <div class="metric-value">Low Cost</div>
-              <div class="metric-label">Average $5 per standard simulation</div>
+              <div class="metric-value">{{ t('home.metric.lowCost') }}</div>
+              <div class="metric-label">{{ t('home.metric.lowCostDesc') }}</div>
             </div>
             <div class="metric-card">
-              <div class="metric-value">High Availability</div>
-              <div class="metric-label">Up to million-level Agent simulation</div>
+              <div class="metric-value">{{ t('home.metric.highAvail') }}</div>
+              <div class="metric-label">{{ t('home.metric.highAvailDesc') }}</div>
             </div>
           </div>
 
           <!-- Project Simulation Steps Introduction -->
           <div class="steps-container">
             <div class="steps-header">
-               <span class="diamond-icon">◇</span> Workflow Sequence
+               <span class="diamond-icon">◇</span> {{ t('home.workflow.title') }}
             </div>
             <div class="workflow-list">
               <div class="workflow-item">
                 <span class="step-num">01</span>
                 <div class="step-info">
-                  <div class="step-title">Graph Construction</div>
-                  <div class="step-desc">Reality seed extraction & Individual and group memory injection & GraphRAG construction</div>
+                  <div class="step-title">{{ t('home.workflow.step1.title') }}</div>
+                  <div class="step-desc">{{ t('home.workflow.step1.desc') }}</div>
                 </div>
               </div>
               <div class="workflow-item">
                 <span class="step-num">02</span>
                 <div class="step-info">
-                  <div class="step-title">Environment Setup</div>
-                  <div class="step-desc">Entity relationship extraction & Persona generation & Environment config Agent injection of simulation parameters</div>
+                  <div class="step-title">{{ t('home.workflow.step2.title') }}</div>
+                  <div class="step-desc">{{ t('home.workflow.step2.desc') }}</div>
                 </div>
               </div>
               <div class="workflow-item">
                 <span class="step-num">03</span>
                 <div class="step-info">
-                  <div class="step-title">Start Simulation</div>
-                  <div class="step-desc">Dual-platform parallel simulation & Auto-parse prediction requirements & Dynamic temporal memory updates</div>
+                  <div class="step-title">{{ t('home.workflow.step3.title') }}</div>
+                  <div class="step-desc">{{ t('home.workflow.step3.desc') }}</div>
                 </div>
               </div>
               <div class="workflow-item">
                 <span class="step-num">04</span>
                 <div class="step-info">
-                  <div class="step-title">Report Generation</div>
-                  <div class="step-desc">ReportAgent has a rich toolset for deep interaction with the post-simulation environment</div>
+                  <div class="step-title">{{ t('home.workflow.step4.title') }}</div>
+                  <div class="step-desc">{{ t('home.workflow.step4.desc') }}</div>
                 </div>
               </div>
               <div class="workflow-item">
                 <span class="step-num">05</span>
                 <div class="step-info">
-                  <div class="step-title">Deep Interaction</div>
-                  <div class="step-desc">Chat with any individual in the simulated world & Chat with ReportAgent</div>
+                  <div class="step-title">{{ t('home.workflow.step5.title') }}</div>
+                  <div class="step-desc">{{ t('home.workflow.step5.desc') }}</div>
                 </div>
               </div>
             </div>
@@ -124,8 +126,8 @@
             <!-- Upload Area -->
             <div class="console-section">
               <div class="console-header">
-                <span class="console-label">01 / Reality Seeds</span>
-                <span class="console-meta">Supported formats: PDF, MD, TXT</span>
+                <span class="console-label">{{ t('home.console.realitySeeds') }}</span>
+                <span class="console-meta">{{ t('home.console.supportedFormats') }}</span>
               </div>
               
               <div 
@@ -148,8 +150,8 @@
                 
                 <div v-if="files.length === 0" class="upload-placeholder">
                   <div class="upload-icon">↑</div>
-                  <div class="upload-title">Drag and drop files to upload</div>
-                  <div class="upload-hint">or click to browse file system</div>
+                  <div class="upload-title">{{ t('home.console.uploadTitle') }}</div>
+                  <div class="upload-hint">{{ t('home.console.uploadHint') }}</div>
                 </div>
                 
                 <div v-else class="file-list">
@@ -164,23 +166,23 @@
 
             <!-- Divider -->
             <div class="console-divider">
-              <span>Input Parameters</span>
+              <span>{{ t('home.console.inputParams') }}</span>
             </div>
 
             <!-- Input Area -->
             <div class="console-section">
               <div class="console-header">
-                <span class="console-label">>_ 02 / Simulation Prompt</span>
+                <span class="console-label">{{ t('home.console.simPrompt') }}</span>
               </div>
               <div class="input-wrapper">
                 <textarea
                   v-model="formData.simulationRequirement"
                   class="code-input"
-                  placeholder="// Enter simulation or prediction requirements in natural language (e.g., If university X publishes a notice revoking a disciplinary action, what public opinion trends will it trigger?)"
+                  :placeholder="t('home.console.simPlaceholder')"
                   rows="6"
                   :disabled="loading"
                 ></textarea>
-                <div class="model-badge">Engine: MiroFish-V1.0</div>
+                <div class="model-badge">{{ t('home.console.engineBadge') }}</div>
               </div>
             </div>
 
@@ -191,8 +193,8 @@
                 @click="startSimulation"
                 :disabled="!canSubmit || loading"
               >
-                <span v-if="!loading">Start Engine</span>
-                <span v-else>Initializing...</span>
+                <span v-if="!loading">{{ t('btn.startEngine') }}</span>
+                <span v-else>{{ t('btn.initializing') }}</span>
                 <span class="btn-arrow">→</span>
               </button>
             </div>
@@ -210,6 +212,9 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import HistoryDatabase from '../components/HistoryDatabase.vue'
+import { useI18n } from '../i18n'
+
+const { t, setLocale, locale } = useI18n()
 
 const router = useRouter()
 
@@ -367,6 +372,27 @@ const startSimulation = () => {
 
 .github-link:hover {
   opacity: 0.8;
+}
+
+.lang-switcher {
+  display: flex;
+  gap: 4px;
+  margin-left: 16px;
+}
+.lang-switcher button {
+  padding: 2px 8px;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  font-size: 11px;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+.lang-switcher button.active {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border-color: rgba(255,255,255,0.5);
 }
 
 .arrow {

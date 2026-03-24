@@ -6,7 +6,7 @@ Provides interfaces for simulation report generation, retrieval, and conversatio
 import os
 import traceback
 import threading
-from flask import request, jsonify, send_file
+from flask import request, jsonify, send_file, g
 
 from . import report_bp
 from ..config import Config
@@ -120,6 +120,9 @@ def generate_report():
             }
         )
 
+        # Capture language before entering background thread (g is not available in threads)
+        language = g.language
+
         # Define background task
         def run_generate():
             try:
@@ -134,7 +137,8 @@ def generate_report():
                 agent = ReportAgent(
                     graph_id=graph_id,
                     simulation_id=simulation_id,
-                    simulation_requirement=simulation_requirement
+                    simulation_requirement=simulation_requirement,
+                    language=language
                 )
 
                 # Progress callback
@@ -540,7 +544,8 @@ def chat_with_report_agent():
         agent = ReportAgent(
             graph_id=graph_id,
             simulation_id=simulation_id,
-            simulation_requirement=simulation_requirement
+            simulation_requirement=simulation_requirement,
+            language=g.language
         )
 
         result = agent.chat(message=message, chat_history=chat_history)
@@ -954,7 +959,7 @@ def search_graph_tool():
 
         from ..services.zep_tools import ZepToolsService
 
-        tools = ZepToolsService()
+        tools = ZepToolsService(language=g.language)
         result = tools.search_graph(
             graph_id=graph_id,
             query=query,
@@ -998,7 +1003,7 @@ def get_graph_statistics_tool():
 
         from ..services.zep_tools import ZepToolsService
 
-        tools = ZepToolsService()
+        tools = ZepToolsService(language=g.language)
         result = tools.get_graph_statistics(graph_id)
 
         return jsonify({

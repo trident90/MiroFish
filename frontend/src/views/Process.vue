@@ -2,12 +2,12 @@
   <div class="process-page">
     <!-- Top Navigation Bar -->
     <nav class="navbar">
-      <div class="nav-brand" @click="goHome">MIROFISH</div>
-      
+      <div class="nav-brand" @click="goHome">{{ t('nav.brand') }}</div>
+
       <!-- Center Step Indicator -->
       <div class="nav-center">
-        <div class="step-badge">STEP 01</div>
-        <div class="step-name">Graph Construction</div>
+        <div class="step-badge">{{ t('nav.stepBadge') }}</div>
+        <div class="step-name">{{ t('step.graphConstruction') }}</div>
       </div>
 
       <div class="nav-status">
@@ -23,20 +23,20 @@
         <div class="panel-header">
           <div class="header-left">
             <span class="header-deco">◆</span>
-            <span class="header-title">Real-time Knowledge Graph</span>
+            <span class="header-title">{{ t('process.realtimeGraph') }}</span>
           </div>
           <div class="header-right">
             <template v-if="graphData">
-              <span class="stat-item">{{ graphData.node_count || graphData.nodes?.length || 0 }} Nodes</span>
+              <span class="stat-item">{{ graphData.node_count || graphData.nodes?.length || 0 }} {{ t('process.nodes') }}</span>
               <span class="stat-divider">|</span>
-              <span class="stat-item">{{ graphData.edge_count || graphData.edges?.length || 0 }} Edges</span>
+              <span class="stat-item">{{ graphData.edge_count || graphData.edges?.length || 0 }} {{ t('process.edges') }}</span>
               <span class="stat-divider">|</span>
             </template>
             <div class="action-buttons">
-                <button class="action-btn" @click="refreshGraph" :disabled="graphLoading" title="Refresh Graph">
+                <button class="action-btn" @click="refreshGraph" :disabled="graphLoading" :title="t('process.refreshGraph')">
                   <span class="icon-refresh" :class="{ 'spinning': graphLoading }">↻</span>
                 </button>
-                <button class="action-btn" @click="toggleFullScreen" :title="isFullScreen ? 'Exit Fullscreen' : 'Fullscreen'">
+                <button class="action-btn" @click="toggleFullScreen" :title="isFullScreen ? t('process.exitFullscreen') : t('process.fullscreen')">
                   <span class="icon-fullscreen">{{ isFullScreen ? '↙' : '↗' }}</span>
                 </button>
             </div>
@@ -50,13 +50,13 @@
             <!-- Building in progress hint -->
             <div v-if="currentPhase === 1" class="graph-building-hint">
               <span class="building-dot"></span>
-              Updating in real-time...
+              {{ t('process.updatingRealtime') }}
             </div>
             
             <!-- Node/Edge Detail Panel -->
             <div v-if="selectedItem" class="detail-panel">
               <div class="detail-panel-header">
-                <span class="detail-title">{{ selectedItem.type === 'node' ? 'Node Details' : 'Relationship' }}</span>
+                <span class="detail-title">{{ selectedItem.type === 'node' ? t('process.nodeDetails') : t('process.relationship') }}</span>
                 <span v-if="selectedItem.type === 'node'" class="detail-badge" :style="{ background: selectedItem.color }">
                   {{ selectedItem.entityType }}
                 </span>
@@ -66,21 +66,21 @@
               <!-- Node Details -->
               <div v-if="selectedItem.type === 'node'" class="detail-content">
                 <div class="detail-row">
-                  <span class="detail-label">Name:</span>
+                  <span class="detail-label">{{ t('process.detailName') }}</span>
                   <span class="detail-value highlight">{{ selectedItem.data.name }}</span>
                 </div>
                 <div class="detail-row">
-                  <span class="detail-label">UUID:</span>
+                  <span class="detail-label">{{ t('process.detailUUID') }}</span>
                   <span class="detail-value uuid">{{ selectedItem.data.uuid }}</span>
                 </div>
                 <div class="detail-row" v-if="selectedItem.data.created_at">
-                  <span class="detail-label">Created:</span>
+                  <span class="detail-label">{{ t('process.detailCreated') }}</span>
                   <span class="detail-value">{{ formatDate(selectedItem.data.created_at) }}</span>
                 </div>
-                
+
                 <!-- Properties / Attributes -->
                 <div class="detail-section" v-if="selectedItem.data.attributes && Object.keys(selectedItem.data.attributes).length > 0">
-                  <span class="detail-label">Properties:</span>
+                  <span class="detail-label">{{ t('process.detailProperties') }}</span>
                   <div class="properties-list">
                     <div v-for="(value, key) in selectedItem.data.attributes" :key="key" class="property-item">
                       <span class="property-key">{{ key }}:</span>
@@ -417,6 +417,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { generateOntology, getProject, buildGraph, getTaskStatus, getGraphData } from '../api/graph'
 import { getPendingUpload, clearPendingUpload } from '../store/pendingUpload'
 import * as d3 from 'd3'
+import { useI18n } from '../i18n'
+
+const { t, setLocale, locale } = useI18n()
 
 const route = useRoute()
 const router = useRouter()

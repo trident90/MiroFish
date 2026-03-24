@@ -20,31 +20,13 @@ from openai import OpenAI
 
 from ..config import Config
 from ..utils.logger import get_logger
+from ..utils.language import get_lang_config, TIMEZONE_CONFIG as DEFAULT_TIMEZONE_CONFIG
 from .zep_entity_reader import EntityNode, ZepEntityReader
 
 logger = get_logger('mirofish.simulation_config')
 
-# China daily schedule configuration (Beijing Time)
-CHINA_TIMEZONE_CONFIG = {
-    # Late night hours (almost no activity)
-    "dead_hours": [0, 1, 2, 3, 4, 5],
-    # Morning hours (gradually waking up)
-    "morning_hours": [6, 7, 8],
-    # Work hours
-    "work_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
-    # Evening peak (most active)
-    "peak_hours": [19, 20, 21, 22],
-    # Night hours (activity decreasing)
-    "night_hours": [23],
-    # Activity multipliers
-    "activity_multipliers": {
-        "dead": 0.05,      # Almost no one in early morning
-        "morning": 0.4,    # Gradually active in morning
-        "work": 0.7,       # Moderate during work hours
-        "peak": 1.5,       # Evening peak
-        "night": 0.5       # Late night decline
-    }
-}
+# Backward-compatible alias: use the language module's timezone config
+CHINA_TIMEZONE_CONFIG = DEFAULT_TIMEZONE_CONFIG
 
 
 @dataclass
@@ -81,7 +63,7 @@ class AgentActivityConfig:
 
 @dataclass  
 class TimeSimulationConfig:
-    """Time simulation configuration (based on Chinese daily schedule)"""
+    """Time simulation configuration"""
     # Total simulation duration (in simulated hours)
     total_simulation_hours: int = 72  # Default 72 hours (3 days)
 
@@ -92,7 +74,7 @@ class TimeSimulationConfig:
     agents_per_hour_min: int = 5
     agents_per_hour_max: int = 20
 
-    # Peak hours (19-22, most active time for Chinese users)
+    # Peak hours (19-22, most active time)
     peak_hours: List[int] = field(default_factory=lambda: [19, 20, 21, 22])
     peak_activity_multiplier: float = 1.5
 
@@ -225,11 +207,15 @@ class SimulationConfigGenerator:
         self,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
-        model_name: Optional[str] = None
+        model_name: Optional[str] = None,
+        language: str = "en"
     ):
         self.api_key = api_key or Config.LLM_API_KEY
         self.base_url = base_url or Config.LLM_BASE_URL
         self.model_name = model_name or Config.LLM_MODEL_NAME
+        self.language = language
+        self.lang_config = get_lang_config(language)
+        self.timezone_config = DEFAULT_TIMEZONE_CONFIG
         
         if not self.api_key:
             raise ValueError("LLM_API_KEY is not configured")
@@ -547,7 +533,7 @@ class SimulationConfigGenerator:
 Please generate time configuration JSON.
 
 ### Basic Principles (for reference only, should be flexibly adjusted based on specific events and participant groups):
-- The user group is Chinese, must conform to Beijing Time daily schedule
+- The user group is {self.lang_config["daily_schedule_group"]}, must conform to {self.lang_config["daily_schedule_label"]} daily schedule
 - 0-5 AM almost no activity (activity multiplier 0.05)
 - 6-8 AM gradually becoming active (activity multiplier 0.4)
 - 9 AM-6 PM work hours moderately active (activity multiplier 0.7)
@@ -584,7 +570,7 @@ Field descriptions:
 - work_hours (int array): Work hours
 - reasoning (string): Brief explanation of why this configuration was chosen"""
 
-        system_prompt = "You are a social media simulation expert. Return pure JSON format. Time configuration must conform to Chinese daily schedule."
+        system_prompt = f"You are a social media simulation expert. Return pure JSON format. {self.lang_config['system_prompt_schedule']}"
         
         try:
             return self._call_llm_with_retry(prompt, system_prompt)
@@ -593,17 +579,18 @@ Field descriptions:
             return self._get_default_time_config(num_entities)
     
     def _get_default_time_config(self, num_entities: int) -> Dict[str, Any]:
-        """Get default time configuration (Chinese daily schedule)"""
+        """Get default time configuration"""
+        tz = self.timezone_config
         return {
             "total_simulation_hours": 72,
             "minutes_per_round": 60,  # 1 hour per round, accelerated time flow
             "agents_per_hour_min": max(1, num_entities // 15),
             "agents_per_hour_max": max(5, num_entities // 5),
-            "peak_hours": [19, 20, 21, 22],
-            "off_peak_hours": [0, 1, 2, 3, 4, 5],
-            "morning_hours": [6, 7, 8],
-            "work_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
-            "reasoning": "Using default Chinese daily schedule configuration (1 hour per round)"
+            "peak_hours": tz["peak_hours"],
+            "off_peak_hours": tz["dead_hours"],
+            "morning_hours": tz["morning_hours"],
+            "work_hours": tz["work_hours"],
+            "reasoning": f"Using default {self.lang_config['daily_schedule_label']} daily schedule configuration (1 hour per round)"
         }
     
     def _parse_time_config(self, result: Dict[str, Any], num_entities: int) -> TimeSimulationConfig:
@@ -838,7 +825,7 @@ Simulation requirements: {simulation_requirement}
 
 ## Task
 Generate activity configurations for each entity, note:
-- **Schedule conforms to Chinese daily routine**: Almost no activity 0-5 AM, most active 7-10 PM
+- **{self.lang_config["agent_schedule_note"]}**
 - **Official institutions** (University/GovernmentAgency): Low activity (0.1-0.3), active during work hours (9-17), slow response (60-240 min), high influence (2.5-3.0)
 - **Media** (MediaOutlet): Medium activity (0.4-0.6), active all day (8-23), fast response (5-30 min), high influence (2.0-2.5)
 - **Individuals** (Student/Person/Alumni): High activity (0.6-0.9), mainly active in evening (18-23), fast response (1-15 min), low influence (0.8-1.2)
@@ -852,7 +839,7 @@ Return JSON format (no markdown):
             "activity_level": <0.0-1.0>,
             "posts_per_hour": <posting frequency>,
             "comments_per_hour": <comment frequency>,
-            "active_hours": [<active hours list, considering Chinese daily schedule>],
+            "active_hours": [<active hours list, considering {self.lang_config["daily_schedule_label"]} daily schedule>],
             "response_delay_min": <minimum response delay in minutes>,
             "response_delay_max": <maximum response delay in minutes>,
             "sentiment_bias": <-1.0 to 1.0>,
@@ -863,7 +850,7 @@ Return JSON format (no markdown):
     ]
 }}"""
 
-        system_prompt = "You are a social media behavior analysis expert. Return pure JSON. Configuration must conform to Chinese daily schedule."
+        system_prompt = f"You are a social media behavior analysis expert. Return pure JSON. {self.lang_config['system_prompt_schedule']}"
         
         try:
             result = self._call_llm_with_retry(prompt, system_prompt)
@@ -902,7 +889,7 @@ Return JSON format (no markdown):
         return configs
     
     def _generate_agent_config_by_rule(self, entity: EntityNode) -> Dict[str, Any]:
-        """Generate single Agent configuration based on rules (Chinese daily schedule)"""
+        """Generate single Agent configuration based on rules"""
         entity_type = (entity.get_entity_type() or "Unknown").lower()
         
         if entity_type in ["university", "governmentagency", "ngo"]:

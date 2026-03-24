@@ -3,27 +3,31 @@
     <!-- Header -->
     <header class="app-header">
       <div class="header-left">
-        <div class="brand" @click="router.push('/')">MIROFISH</div>
+        <div class="brand" @click="router.push('/')">{{ t('nav.brand') }}</div>
+        <div class="lang-switcher">
+          <button :class="{ active: locale === 'en' }" @click="setLocale('en')">EN</button>
+          <button :class="{ active: locale === 'ko' }" @click="setLocale('ko')">KO</button>
+        </div>
       </div>
-      
+
       <div class="header-center">
         <div class="view-switcher">
-          <button 
-            v-for="mode in ['graph', 'split', 'workbench']" 
+          <button
+            v-for="mode in ['graph', 'split', 'workbench']"
             :key="mode"
             class="switch-btn"
             :class="{ active: viewMode === mode }"
             @click="viewMode = mode"
           >
-            {{ { graph: 'Graph', split: 'Split', workbench: 'Workbench' }[mode] }}
+            {{ { graph: t('header.viewGraph'), split: t('header.viewSplit'), workbench: t('header.viewWorkbench') }[mode] }}
           </button>
         </div>
       </div>
 
       <div class="header-right">
         <div class="workflow-step">
-          <span class="step-num">Step 3/5</span>
-          <span class="step-name">Start Simulation</span>
+          <span class="step-num">{{ t('step.label') }} 3/5</span>
+          <span class="step-name">{{ t('step.startSimulation') }}</span>
         </div>
         <div class="step-divider"></div>
         <span class="status-indicator" :class="statusClass">
@@ -73,7 +77,9 @@ import GraphPanel from '../components/GraphPanel.vue'
 import Step3Simulation from '../components/Step3Simulation.vue'
 import { getProject, getGraphData } from '../api/graph'
 import { getSimulation, getSimulationConfig, stopSimulation, closeSimulationEnv, getEnvStatus } from '../api/simulation'
+import { useI18n } from '../i18n'
 
+const { t, setLocale, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 
@@ -115,9 +121,9 @@ const statusClass = computed(() => {
 })
 
 const statusText = computed(() => {
-  if (currentStatus.value === 'error') return 'Error'
-  if (currentStatus.value === 'completed') return 'Completed'
-  return 'Running'
+  if (currentStatus.value === 'error') return t('status.error')
+  if (currentStatus.value === 'completed') return t('status.completed')
+  return t('status.running')
 })
 
 const isSimulating = computed(() => currentStatus.value === 'processing')
@@ -443,5 +449,9 @@ onUnmounted(() => {
 .panel-wrapper.left {
   border-right: 1px solid #EAEAEA;
 }
+
+.lang-switcher { display: flex; gap: 4px; }
+.lang-switcher button { padding: 2px 8px; border: 1px solid rgba(255,255,255,0.3); background: transparent; color: rgba(255,255,255,0.6); cursor: pointer; font-size: 11px; border-radius: 3px; transition: all 0.2s; }
+.lang-switcher button.active { background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.5); }
 </style>
 

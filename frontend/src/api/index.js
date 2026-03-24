@@ -12,6 +12,7 @@ const service = axios.create({
 // Request interceptor
 service.interceptors.request.use(
   config => {
+    config.headers['X-Language'] = localStorage.getItem('mirofish_lang') || 'en'
     return config
   },
   error => {

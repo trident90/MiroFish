@@ -9,7 +9,7 @@ import warnings
 # Needs to be set before all other imports
 warnings.filterwarnings("ignore", message=".*resource_tracker.*")
 
-from flask import Flask, request
+from flask import Flask, request, g
 from flask_cors import CORS
 
 from .config import Config
@@ -51,6 +51,10 @@ def create_app(config_class=Config):
     # Request logging middleware
     @app.before_request
     def log_request():
+        # Set language from X-Language header
+        from .utils.language import get_language
+        g.language = get_language(request)
+
         logger = get_logger('mirofish.request')
         logger.debug(f"Request: {request.method} {request.path}")
         if request.content_type and 'json' in request.content_type:

@@ -21,6 +21,7 @@ from enum import Enum
 from ..config import Config
 from ..utils.llm_client import LLMClient
 from ..utils.logger import get_logger
+from ..utils.language import get_lang_config
 from .zep_tools import (
     ZepToolsService, 
     SearchResult, 
@@ -653,8 +654,8 @@ DO focus on "what will the future look like" — the simulation results ARE the 
 
 3. [Language Consistency - Quoted Content Must Be Translated to the Report Language]
    - Content returned by tools may contain mixed-language expressions
-   - The report must be written entirely in English
-   - When quoting content returned by tools, ensure it is in fluent English before writing it into the report
+   - {report_language_rule}
+   - {report_translation_rule}
    - Maintain the original meaning during translation, ensuring natural and smooth expression
    - This rule applies to both body text and quote blocks (> format)
 
@@ -881,12 +882,13 @@ class ReportAgent:
     MAX_TOOL_CALLS_PER_CHAT = 2
     
     def __init__(
-        self, 
+        self,
         graph_id: str,
         simulation_id: str,
         simulation_requirement: str,
         llm_client: Optional[LLMClient] = None,
-        zep_tools: Optional[ZepToolsService] = None
+        zep_tools: Optional[ZepToolsService] = None,
+        language: str = "en"
     ):
         """
         Initialize Report Agent
@@ -897,11 +899,14 @@ class ReportAgent:
             simulation_requirement: Simulation requirement description
             llm_client: LLM client (optional)
             zep_tools: Zep tools service (optional)
+            language: Language code (default "en")
         """
         self.graph_id = graph_id
         self.simulation_id = simulation_id
         self.simulation_requirement = simulation_requirement
-        
+        self.language = language
+        self.lang_config = get_lang_config(language)
+
         self.llm = llm_client or LLMClient()
         self.zep_tools = zep_tools or ZepToolsService()
         
@@ -1257,6 +1262,8 @@ class ReportAgent:
             simulation_requirement=self.simulation_requirement,
             section_title=section.title,
             tools_description=self._get_tools_description(),
+            report_language_rule=self.lang_config["report_language_rule"],
+            report_translation_rule=self.lang_config["report_translation_rule"],
         )
 
         # Build user prompt - each completed section is passed in with max 4000 characters

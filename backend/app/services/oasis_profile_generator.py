@@ -19,6 +19,7 @@ from openai import OpenAI
 from zep_cloud.client import Zep
 
 from ..config import Config
+from ..utils.language import get_lang_config
 from ..utils.logger import get_logger
 from .zep_entity_reader import EntityNode, ZepEntityReader
 
@@ -178,13 +179,17 @@ class OasisProfileGenerator:
     ]
     
     def __init__(
-        self, 
+        self,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         model_name: Optional[str] = None,
         zep_api_key: Optional[str] = None,
-        graph_id: Optional[str] = None
+        graph_id: Optional[str] = None,
+        language: str = "en"
     ):
+        self.language = language
+        self.lang_config = get_lang_config(language)
+        self.countries = self.lang_config["countries"]
         self.api_key = api_key or Config.LLM_API_KEY
         self.base_url = base_url or Config.LLM_BASE_URL
         self.model_name = model_name or Config.LLM_MODEL_NAME
@@ -670,7 +675,7 @@ class OasisProfileGenerator:
 
     def _get_system_prompt(self, is_individual: bool) -> str:
         """Get system prompt"""
-        base_prompt = "You are an expert in social media user profile generation. Generate detailed, realistic personas for public opinion simulation, restoring the existing real-world situation to the greatest extent possible. You must return valid JSON format, and all string values must not contain unescaped newline characters. Use English."
+        base_prompt = f"You are an expert in social media user profile generation. Generate detailed, realistic personas for public opinion simulation, restoring the existing real-world situation to the greatest extent possible. You must return valid JSON format, and all string values must not contain unescaped newline characters. {self.lang_config['use_language_directive']}"
         return base_prompt
     
     def _build_individual_persona_prompt(
@@ -710,14 +715,14 @@ Please generate JSON containing the following fields:
 3. age: Age as a number (must be an integer)
 4. gender: Gender, must be in English: "male" or "female"
 5. mbti: MBTI type (e.g., INTJ, ENFP, etc.)
-6. country: Country (e.g., "South Korea", "United States")
+6. country: Country ({self.lang_config["country_example"]})
 7. profession: Occupation
 8. interested_topics: Array of topics of interest
 
 Important:
 - All field values must be strings or numbers, do not use newline characters
 - persona must be a coherent text description
-- Use English for all fields
+- {self.lang_config["use_language_all_fields"]}
 - Content must be consistent with the entity information
 - age must be a valid integer, gender must be "male" or "female"
 """
@@ -759,14 +764,14 @@ Please generate JSON containing the following fields:
 3. age: Fixed at 30 (virtual age for institutional accounts)
 4. gender: Fixed as "other" (institutional accounts use "other" to indicate non-individual)
 5. mbti: MBTI type, used to describe the account style, e.g., ISTJ represents rigorous and conservative
-6. country: Country (e.g., "South Korea", "United States")
+6. country: Country ({self.lang_config["country_example"]})
 7. profession: Description of the institution's functions
 8. interested_topics: Array of areas of interest
 
 Important:
 - All field values must be strings or numbers, null values are not allowed
 - persona must be a coherent text description, do not use newline characters
-- Use English for all fields (except gender which must be "other")
+- {self.lang_config["use_language_all_fields"]}
 - age must be the integer 30, gender must be the string "other"
 - Institutional account communication must align with its identity and positioning"""
     
@@ -789,7 +794,7 @@ Important:
                 "age": random.randint(18, 30),
                 "gender": random.choice(["male", "female"]),
                 "mbti": random.choice(self.MBTI_TYPES),
-                "country": random.choice(self.COUNTRIES),
+                "country": random.choice(self.countries),
                 "profession": "Student",
                 "interested_topics": ["Education", "Social Issues", "Technology"],
             }
@@ -801,7 +806,7 @@ Important:
                 "age": random.randint(35, 60),
                 "gender": random.choice(["male", "female"]),
                 "mbti": random.choice(["ENTJ", "INTJ", "ENTP", "INTP"]),
-                "country": random.choice(self.COUNTRIES),
+                "country": random.choice(self.countries),
                 "profession": entity_attributes.get("occupation", "Expert"),
                 "interested_topics": ["Politics", "Economics", "Culture & Society"],
             }
@@ -813,7 +818,7 @@ Important:
                 "age": 30,  # Virtual age for institutional accounts
                 "gender": "other",  # Institutions use "other"
                 "mbti": "ISTJ",  # Institutional style: rigorous and conservative
-                "country": "China",
+                "country": self.lang_config["default_country"],
                 "profession": "Media",
                 "interested_topics": ["General News", "Current Events", "Public Affairs"],
             }
@@ -825,7 +830,7 @@ Important:
                 "age": 30,  # Virtual age for institutional accounts
                 "gender": "other",  # Institutions use "other"
                 "mbti": "ISTJ",  # Institutional style: rigorous and conservative
-                "country": "China",
+                "country": self.lang_config["default_country"],
                 "profession": entity_type,
                 "interested_topics": ["Public Policy", "Community", "Official Announcements"],
             }
@@ -838,7 +843,7 @@ Important:
                 "age": random.randint(25, 50),
                 "gender": random.choice(["male", "female"]),
                 "mbti": random.choice(self.MBTI_TYPES),
-                "country": random.choice(self.COUNTRIES),
+                "country": random.choice(self.countries),
                 "profession": entity_type,
                 "interested_topics": ["General", "Social Issues"],
             }
@@ -1171,7 +1176,7 @@ Important:
                 "age": profile.age if profile.age else 30,
                 "gender": self._normalize_gender(profile.gender),
                 "mbti": profile.mbti if profile.mbti else "ISTJ",
-                "country": profile.country if profile.country else "China",
+                "country": profile.country if profile.country else self.lang_config["default_country"],
             }
             
             # Optional fields

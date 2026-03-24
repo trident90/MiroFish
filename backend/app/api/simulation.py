@@ -5,7 +5,7 @@ Step2: Zep entity reading and filtering, OASIS simulation preparation and execut
 
 import os
 import traceback
-from flask import request, jsonify, send_file
+from flask import request, jsonify, send_file, g
 
 from . import simulation_bp
 from ..config import Config
@@ -500,6 +500,9 @@ def prepare_simulation():
         state.status = SimulationStatus.PREPARING
         manager._save_simulation_state(state)
 
+        # Capture language before entering background thread (g is not available in threads)
+        language = g.language
+
         # Define background task
         def run_prepare():
             try:
@@ -582,7 +585,8 @@ def prepare_simulation():
                     defined_entity_types=entity_types_list,
                     use_llm_for_profiles=use_llm_for_profiles,
                     progress_callback=progress_callback,
-                    parallel_profile_count=parallel_profile_count
+                    parallel_profile_count=parallel_profile_count,
+                    language=language
                 )
 
                 # Task complete
@@ -1409,7 +1413,7 @@ def generate_profiles():
                 "error": "No entities found matching the criteria"
             }), 400
 
-        generator = OasisProfileGenerator()
+        generator = OasisProfileGenerator(language=g.language)
         profiles = generator.generate_profiles_from_entities(
             entities=filtered.entities,
             use_llm=use_llm

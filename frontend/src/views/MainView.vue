@@ -3,26 +3,30 @@
     <!-- Header -->
     <header class="app-header">
       <div class="header-left">
-        <div class="brand" @click="router.push('/')">MIROFISH</div>
+        <div class="brand" @click="router.push('/')">{{ t('nav.brand') }}</div>
+        <div class="lang-switcher">
+          <button :class="{ active: locale === 'en' }" @click="setLocale('en')">EN</button>
+          <button :class="{ active: locale === 'ko' }" @click="setLocale('ko')">KO</button>
+        </div>
       </div>
-      
+
       <div class="header-center">
         <div class="view-switcher">
-          <button 
-            v-for="mode in ['graph', 'split', 'workbench']" 
+          <button
+            v-for="mode in ['graph', 'split', 'workbench']"
             :key="mode"
             class="switch-btn"
             :class="{ active: viewMode === mode }"
             @click="viewMode = mode"
           >
-            {{ { graph: 'Graph', split: 'Split', workbench: 'Workbench' }[mode] }}
+            {{ { graph: t('header.viewGraph'), split: t('header.viewSplit'), workbench: t('header.viewWorkbench') }[mode] }}
           </button>
         </div>
       </div>
 
       <div class="header-right">
         <div class="workflow-step">
-          <span class="step-num">Step {{ currentStep }}/5</span>
+          <span class="step-num">{{ t('step.label') }} {{ currentStep }}/5</span>
           <span class="step-name">{{ stepNames[currentStep - 1] }}</span>
         </div>
         <div class="step-divider"></div>
@@ -82,6 +86,9 @@ import Step1GraphBuild from '../components/Step1GraphBuild.vue'
 import Step2EnvSetup from '../components/Step2EnvSetup.vue'
 import { generateOntology, getProject, buildGraph, getTaskStatus, getGraphData } from '../api/graph'
 import { getPendingUpload, clearPendingUpload } from '../store/pendingUpload'
+import { useI18n } from '../i18n'
+
+const { t, setLocale, locale } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -91,7 +98,7 @@ const viewMode = ref('split') // graph | split | workbench
 
 // Step State
 const currentStep = ref(1) // 1: Graph Construction, 2: Environment Setup, 3: Start Simulation, 4: Report Generation, 5: Deep Interaction
-const stepNames = ['Graph Construction', 'Environment Setup', 'Start Simulation', 'Report Generation', 'Deep Interaction']
+const stepNames = computed(() => [t('step.graphConstruction'), t('step.envSetup'), t('step.startSimulation'), t('step.reportGeneration'), t('step.deepInteraction')])
 
 // Data State
 const currentProjectId = ref(route.params.projectId)
@@ -130,11 +137,11 @@ const statusClass = computed(() => {
 })
 
 const statusText = computed(() => {
-  if (error.value) return 'Error'
-  if (currentPhase.value >= 2) return 'Ready'
-  if (currentPhase.value === 1) return 'Building Graph'
-  if (currentPhase.value === 0) return 'Generating Ontology'
-  return 'Initializing'
+  if (error.value) return t('status.error')
+  if (currentPhase.value >= 2) return t('status.ready')
+  if (currentPhase.value === 1) return t('status.buildingGraph')
+  if (currentPhase.value === 0) return t('status.generatingOntology')
+  return t('status.initializing')
 })
 
 // --- Helpers ---
@@ -159,7 +166,7 @@ const toggleMaximize = (target) => {
 const handleNextStep = (params = {}) => {
   if (currentStep.value < 5) {
     currentStep.value++
-    addLog(`Entering Step ${currentStep.value}: ${stepNames[currentStep.value - 1]}`)
+    addLog(`Entering Step ${currentStep.value}: ${stepNames.value[currentStep.value - 1]}`)
     
     // If entering Step 3 from Step 2, record simulation round configuration
     if (currentStep.value === 3 && params.maxRounds) {
@@ -171,7 +178,7 @@ const handleNextStep = (params = {}) => {
 const handleGoBack = () => {
   if (currentStep.value > 1) {
     currentStep.value--
-    addLog(`Returning to Step ${currentStep.value}: ${stepNames[currentStep.value - 1]}`)
+    addLog(`Returning to Step ${currentStep.value}: ${stepNames.value[currentStep.value - 1]}`)
   }
 }
 
@@ -433,12 +440,38 @@ onUnmounted(() => {
   transform: translateX(-50%);
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .brand {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 800;
   font-size: 18px;
   letter-spacing: 1px;
   cursor: pointer;
+}
+
+.lang-switcher {
+  display: flex;
+  gap: 4px;
+}
+.lang-switcher button {
+  padding: 2px 8px;
+  border: 1px solid rgba(0,0,0,0.2);
+  background: transparent;
+  color: rgba(0,0,0,0.4);
+  cursor: pointer;
+  font-size: 11px;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+.lang-switcher button.active {
+  background: rgba(0,0,0,0.08);
+  color: #000;
+  border-color: rgba(0,0,0,0.4);
 }
 
 .view-switcher {

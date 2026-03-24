@@ -19,6 +19,7 @@ from ..config import Config
 from ..utils.logger import get_logger
 from ..utils.llm_client import LLMClient
 from ..utils.zep_paging import fetch_all_nodes, fetch_all_edges
+from ..utils.language import get_lang_config
 
 logger = get_logger('mirofish.zep_tools')
 
@@ -421,14 +422,16 @@ class ZepToolsService:
     MAX_RETRIES = 3
     RETRY_DELAY = 2.0
     
-    def __init__(self, api_key: Optional[str] = None, llm_client: Optional[LLMClient] = None):
+    def __init__(self, api_key: Optional[str] = None, llm_client: Optional[LLMClient] = None, language: str = "en"):
         self.api_key = api_key or Config.ZEP_API_KEY
         if not self.api_key:
             raise ValueError("ZEP_API_KEY is not configured")
-        
+
         self.client = Zep(api_key=self.api_key)
         # LLM client for InsightForge sub-query generation
         self._llm_client = llm_client
+        self.language = language
+        self.lang_config = get_lang_config(language)
         logger.info("ZepToolsService initialized")
     
     @property
@@ -1360,7 +1363,9 @@ Return the sub-question list in JSON format."""
             "5. Separate answers to different questions with blank lines\n"
             "6. Answers should have substantive content, at least 2-3 sentences per question\n\n"
         )
-        optimized_prompt = f"{INTERVIEW_PROMPT_PREFIX}{combined_prompt}"
+        interview_language_note = self.lang_config.get("interview_language_note", "")
+        language_suffix = f"\n{interview_language_note}" if interview_language_note else ""
+        optimized_prompt = f"{INTERVIEW_PROMPT_PREFIX}{combined_prompt}{language_suffix}"
         
         # Step 4: Call real interview API (no platform specified, default dual-platform interview)
         try:
@@ -1641,7 +1646,9 @@ Please select up to {max_agents} most suitable Agents for interviewing, and expl
         
         agent_roles = [a.get("profession", "Unknown") for a in selected_agents]
         
-        system_prompt = """You are a professional journalist/interviewer. Based on interview requirements, generate 3-5 in-depth interview questions.
+        interview_question_directive = self.lang_config.get("interview_question_directive", "")
+        directive_line = f"\n7. {interview_question_directive}" if interview_question_directive else ""
+        system_prompt = f"""You are a professional journalist/interviewer. Based on interview requirements, generate 3-5 in-depth interview questions.
 
 Question requirements:
 1. Open-ended questions that encourage detailed responses
@@ -1649,9 +1656,9 @@ Question requirements:
 3. Cover multiple dimensions including facts, opinions, feelings, etc.
 4. Natural language, like a real interview
 5. Keep each question under 50 words, concise and clear
-6. Ask directly, do not include background explanation or prefix
+6. Ask directly, do not include background explanation or prefix{directive_line}
 
-Return in JSON format: {"questions": ["question_1", "question_2", ...]}"""
+Return in JSON format: {{"questions": ["question_1", "question_2", ...]}}"""
 
         user_prompt = f"""Interview requirement: {interview_requirement}
 

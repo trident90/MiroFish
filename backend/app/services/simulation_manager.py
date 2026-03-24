@@ -234,7 +234,8 @@ class SimulationManager:
         defined_entity_types: Optional[List[str]] = None,
         use_llm_for_profiles: bool = True,
         progress_callback: Optional[callable] = None,
-        parallel_profile_count: int = 3
+        parallel_profile_count: int = 3,
+        language: str = "en"
     ) -> SimulationState:
         """
         Prepare simulation environment (fully automated)
@@ -312,7 +313,7 @@ class SimulationManager:
                 )
             
             # Pass graph_id to enable Zep retrieval for richer context
-            generator = OasisProfileGenerator(graph_id=state.graph_id)
+            generator = OasisProfileGenerator(graph_id=state.graph_id, language=language)
             
             def profile_progress(current, total, msg):
                 if progress_callback:
@@ -389,7 +390,7 @@ class SimulationManager:
                     total=3
                 )
             
-            config_generator = SimulationConfigGenerator()
+            config_generator = SimulationConfigGenerator(language=language)
             
             if progress_callback:
                 progress_callback(
