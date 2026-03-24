@@ -380,19 +380,25 @@ const startSimulation = () => {
   margin-left: 16px;
 }
 .lang-switcher button {
-  padding: 2px 8px;
-  border: 1px solid rgba(255,255,255,0.3);
+  padding: 4px 12px;
+  border: 1px solid #333;
   background: transparent;
-  color: rgba(255,255,255,0.6);
+  color: #666;
   cursor: pointer;
-  font-size: 11px;
-  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
   transition: all 0.2s;
+  font-family: var(--font-mono);
+}
+.lang-switcher button:hover {
+  background: #f0f0f0;
+  color: #333;
 }
 .lang-switcher button.active {
-  background: rgba(255,255,255,0.15);
+  background: #222;
   color: #fff;
-  border-color: rgba(255,255,255,0.5);
+  border-color: #222;
 }
 
 .arrow {
