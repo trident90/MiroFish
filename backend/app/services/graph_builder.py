@@ -227,6 +227,8 @@ class GraphBuilderService:
             annotations = {}
             
             for attr_def in entity_def.get("attributes", []):
+                if isinstance(attr_def, str):
+                    attr_def = {"name": attr_def, "description": attr_def, "type": "text"}
                 attr_name = safe_attr_name(attr_def["name"])  # Use safe name
                 attr_desc = attr_def.get("description", attr_name)
                 # Zep API requires Field description, this is mandatory
@@ -251,6 +253,8 @@ class GraphBuilderService:
             annotations = {}
 
             for attr_def in edge_def.get("attributes", []):
+                if isinstance(attr_def, str):
+                    attr_def = {"name": attr_def, "description": attr_def, "type": "text"}
                 attr_name = safe_attr_name(attr_def["name"])  # Use safe name
                 attr_desc = attr_def.get("description", attr_name)
                 # Zep API requires Field description, this is mandatory

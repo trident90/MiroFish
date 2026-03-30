@@ -907,9 +907,23 @@ class ReportAgent:
         self.language = language
         self.lang_config = get_lang_config(language)
 
-        self.llm = llm_client or LLMClient()
+        self.llm = llm_client or LLMClient(role="report")
         self.zep_tools = zep_tools or ZepToolsService()
-        
+
+        # Load report generation parameters from config (can be overridden via settings UI)
+        _cfg = Config.get_report_llm_config()
+        self.max_tokens:         int   = _cfg.get("max_tokens", 4096)
+        self.temperature:        float = _cfg.get("temperature", 0.5)
+        self.tool_result_limit:  int   = _cfg.get("tool_result_limit", 3000)
+        self.sim_req_limit:      int   = _cfg.get("sim_req_limit", 800)
+        self.prev_section_limit: int   = _cfg.get("prev_section_limit", 1000)
+
+        logger.info(
+            f"Report LLM config: model={self.llm.model}, max_tokens={self.max_tokens}, "
+            f"temperature={self.temperature}, tool_result_limit={self.tool_result_limit}, "
+            f"sim_req_limit={self.sim_req_limit}, prev_section_limit={self.prev_section_limit}"
+        )
+
         # Tool definitions
         self.tools = self._define_tools()
 
@@ -1256,22 +1270,27 @@ class ReportAgent:
         if self.report_logger:
             self.report_logger.log_section_start(section.title, section_index)
         
+        # Truncate simulation_requirement to avoid context overflow
+        sim_req_truncated = self.simulation_requirement
+        if len(sim_req_truncated) > self.sim_req_limit:
+            sim_req_truncated = sim_req_truncated[:self.sim_req_limit] + "... [truncated]"
+
         system_prompt = SECTION_SYSTEM_PROMPT_TEMPLATE.format(
             report_title=outline.title,
             report_summary=outline.summary,
-            simulation_requirement=self.simulation_requirement,
+            simulation_requirement=sim_req_truncated,
             section_title=section.title,
             tools_description=self._get_tools_description(),
             report_language_rule=self.lang_config["report_language_rule"],
             report_translation_rule=self.lang_config["report_translation_rule"],
         )
 
-        # Build user prompt - each completed section is passed in with max 4000 characters
+        # Build user prompt - only include last 2 sections, limited per-section to avoid overflow
         if previous_sections:
+            recent_sections = previous_sections[-2:]
             previous_parts = []
-            for sec in previous_sections:
-                # Max 4000 characters per section
-                truncated = sec[:4000] + "..." if len(sec) > 4000 else sec
+            for sec in recent_sections:
+                truncated = sec[:self.prev_section_limit] + "..." if len(sec) > self.prev_section_limit else sec
                 previous_parts.append(truncated)
             previous_content = "\n\n---\n\n".join(previous_parts)
         else:
@@ -1295,8 +1314,10 @@ class ReportAgent:
         used_tools = set()  # Track tools already called
         all_tools = {"insight_forge", "panorama_search", "quick_search", "interview_agents"}
 
-        # Report context, used for InsightForge sub-question generation
-        report_context = f"Section title: {section.title}\nSimulation requirement: {self.simulation_requirement}"
+        # Report context for InsightForge — use half of sim_req_limit
+        _ctx_limit = max(200, self.sim_req_limit // 2)
+        sim_req_short = self.simulation_requirement[:_ctx_limit] + "..." if len(self.simulation_requirement) > _ctx_limit else self.simulation_requirement
+        report_context = f"Section title: {section.title}\nSimulation requirement: {sim_req_short}"
         
         for iteration in range(max_iterations):
             if progress_callback:
@@ -1309,8 +1330,8 @@ class ReportAgent:
             # Call LLM
             response = self.llm.chat(
                 messages=messages,
-                temperature=0.5,
-                max_tokens=4096
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
             )
 
             # Check if LLM returned None (API exception or empty content)
@@ -1460,12 +1481,15 @@ class ReportAgent:
                 if unused_tools and tool_calls_count < self.MAX_TOOL_CALLS_PER_SECTION:
                     unused_hint = REACT_UNUSED_TOOLS_HINT.format(unused_list="、".join(unused_tools))
 
+                # Truncate tool result to limit context accumulation
+                result_truncated = result[:self.tool_result_limit] + "\n...[truncated]" if len(result) > self.tool_result_limit else result
+
                 messages.append({"role": "assistant", "content": response})
                 messages.append({
                     "role": "user",
                     "content": REACT_OBSERVATION_TEMPLATE.format(
                         tool_name=call["name"],
-                        result=result,
+                        result=result_truncated,
                         tool_calls_count=tool_calls_count,
                         max_tool_calls=self.MAX_TOOL_CALLS_PER_SECTION,
                         used_tools_str=", ".join(used_tools),
@@ -1512,8 +1536,8 @@ class ReportAgent:
         
         response = self.llm.chat(
             messages=messages,
-            temperature=0.5,
-            max_tokens=4096
+            temperature=self.temperature,
+            max_tokens=self.max_tokens,
         )
 
         # Check if LLM returned None during forced finalization

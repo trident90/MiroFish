@@ -4,11 +4,13 @@
     <header class="app-header">
       <div class="header-left">
         <div class="brand" @click="router.push('/')">{{ t('nav.brand') }}</div>
+        <button class="settings-btn" @click="showSettings = true" title="LLM Settings">⚙</button>
         <div class="lang-switcher">
           <button :class="{ active: locale === 'en' }" @click="setLocale('en')">EN</button>
           <button :class="{ active: locale === 'ko' }" @click="setLocale('ko')">KO</button>
         </div>
       </div>
+      <SettingsModal v-model:visible="showSettings" />
 
       <div class="header-center">
         <div class="view-switcher">
@@ -84,11 +86,13 @@ import { useRoute, useRouter } from 'vue-router'
 import GraphPanel from '../components/GraphPanel.vue'
 import Step1GraphBuild from '../components/Step1GraphBuild.vue'
 import Step2EnvSetup from '../components/Step2EnvSetup.vue'
+import SettingsModal from '../components/SettingsModal.vue'
 import { generateOntology, getProject, buildGraph, getTaskStatus, getGraphData } from '../api/graph'
 import { getPendingUpload, clearPendingUpload } from '../store/pendingUpload'
 import { useI18n } from '../i18n'
 
 const { t, setLocale, locale } = useI18n()
+const showSettings = ref(false)
 
 const route = useRoute()
 const router = useRouter()
@@ -454,9 +458,30 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
+.settings-btn {
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.2);
+  color: #666;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+.settings-btn:hover {
+  background: rgba(0,0,0,0.08);
+  color: #000;
+}
+
 .lang-switcher {
   display: flex;
   gap: 4px;
+  margin-left: 8px;
 }
 .lang-switcher button {
   padding: 2px 8px;

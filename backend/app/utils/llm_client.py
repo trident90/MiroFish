@@ -12,21 +12,39 @@ from ..config import Config
 
 
 class LLMClient:
-    """LLM Client"""
-    
+    """LLM Client
+
+    Supports role-based model selection via the `role` parameter:
+      - "simulation" : uses SIMULATION_LLM_* env vars (falls back to LLM_*)
+      - "report"     : uses REPORT_LLM_* env vars (falls back to LLM_*)
+      - None         : uses LLM_* env vars directly
+    """
+
     def __init__(
         self,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
-        model: Optional[str] = None
+        model: Optional[str] = None,
+        role: Optional[str] = None  # "simulation" | "report" | None
     ):
-        self.api_key = api_key or Config.LLM_API_KEY
-        self.base_url = base_url or Config.LLM_BASE_URL
-        self.model = model or Config.LLM_MODEL_NAME
-        
+        if role == "simulation":
+            cfg = Config.get_simulation_llm_config()
+            self.api_key = api_key or cfg["api_key"]
+            self.base_url = base_url or cfg["base_url"]
+            self.model = model or cfg["model"]
+        elif role == "report":
+            cfg = Config.get_report_llm_config()
+            self.api_key = api_key or cfg["api_key"]
+            self.base_url = base_url or cfg["base_url"]
+            self.model = model or cfg["model"]
+        else:
+            self.api_key = api_key or Config.LLM_API_KEY
+            self.base_url = base_url or Config.LLM_BASE_URL
+            self.model = model or Config.LLM_MODEL_NAME
+
         if not self.api_key:
             raise ValueError("LLM_API_KEY is not configured")
-        
+
         self.client = OpenAI(
             api_key=self.api_key,
             base_url=self.base_url

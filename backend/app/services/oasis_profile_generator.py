@@ -190,9 +190,10 @@ class OasisProfileGenerator:
         self.language = language
         self.lang_config = get_lang_config(language)
         self.countries = self.lang_config["countries"]
-        self.api_key = api_key or Config.LLM_API_KEY
-        self.base_url = base_url or Config.LLM_BASE_URL
-        self.model_name = model_name or Config.LLM_MODEL_NAME
+        sim_cfg = Config.get_simulation_llm_config()
+        self.api_key = api_key or sim_cfg["api_key"]
+        self.base_url = base_url or sim_cfg["base_url"]
+        self.model_name = model_name or sim_cfg["model"]
         
         if not self.api_key:
             raise ValueError("LLM_API_KEY is not configured")

@@ -7,12 +7,15 @@
         <a href="https://github.com/666ghj/MiroFish" target="_blank" class="github-link">
           {{ t('nav.github') }} <span class="arrow">↗</span>
         </a>
+        <button class="settings-btn" @click="showSettings = true" title="LLM Settings">⚙</button>
         <div class="lang-switcher">
           <button :class="{ active: locale === 'en' }" @click="setLocale('en')">EN</button>
           <button :class="{ active: locale === 'ko' }" @click="setLocale('ko')">KO</button>
         </div>
       </div>
     </nav>
+
+    <SettingsModal v-model:visible="showSettings" />
 
     <div class="main-content">
       <!-- Upper Section: Hero Area -->
@@ -212,9 +215,11 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import HistoryDatabase from '../components/HistoryDatabase.vue'
+import SettingsModal from '../components/SettingsModal.vue'
 import { useI18n } from '../i18n'
 
 const { t, setLocale, locale } = useI18n()
+const showSettings = ref(false)
 
 const router = useRouter()
 
@@ -374,10 +379,31 @@ const startSimulation = () => {
   opacity: 0.8;
 }
 
+.settings-btn {
+  background: transparent;
+  border: 1px solid #333;
+  color: #666;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 16px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  font-family: var(--font-mono);
+}
+.settings-btn:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
 .lang-switcher {
   display: flex;
   gap: 4px;
-  margin-left: 16px;
+  margin-left: 8px;
 }
 .lang-switcher button {
   padding: 4px 12px;

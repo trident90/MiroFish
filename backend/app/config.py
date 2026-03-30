@@ -27,10 +27,22 @@ class Config:
     # JSON configuration - Disable ASCII escaping to display non-ASCII characters directly (instead of \uXXXX format)
     JSON_AS_ASCII = False
 
-    # LLM configuration (unified OpenAI format)
+    # LLM configuration (unified OpenAI format) — shared fallback
     LLM_API_KEY = os.environ.get('LLM_API_KEY')
     LLM_BASE_URL = os.environ.get('LLM_BASE_URL', 'https://api.openai.com/v1')
     LLM_MODEL_NAME = os.environ.get('LLM_MODEL_NAME', 'gpt-4o-mini')
+
+    # Simulation LLM (ontology, profile, simulation config generation)
+    # Falls back to LLM_* if not set
+    SIMULATION_LLM_API_KEY = os.environ.get('SIMULATION_LLM_API_KEY') or os.environ.get('LLM_API_KEY')
+    SIMULATION_LLM_BASE_URL = os.environ.get('SIMULATION_LLM_BASE_URL') or os.environ.get('LLM_BASE_URL', 'https://api.openai.com/v1')
+    SIMULATION_LLM_MODEL_NAME = os.environ.get('SIMULATION_LLM_MODEL_NAME') or os.environ.get('LLM_MODEL_NAME', 'gpt-4o-mini')
+
+    # Report LLM (report generation — benefits from large context window)
+    # Falls back to LLM_* if not set
+    REPORT_LLM_API_KEY = os.environ.get('REPORT_LLM_API_KEY') or os.environ.get('LLM_API_KEY')
+    REPORT_LLM_BASE_URL = os.environ.get('REPORT_LLM_BASE_URL') or os.environ.get('LLM_BASE_URL', 'https://api.openai.com/v1')
+    REPORT_LLM_MODEL_NAME = os.environ.get('REPORT_LLM_MODEL_NAME') or os.environ.get('LLM_MODEL_NAME', 'gpt-4o-mini')
 
     # Zep configuration
     ZEP_API_KEY = os.environ.get('ZEP_API_KEY')
@@ -72,3 +84,38 @@ class Config:
         if not cls.ZEP_API_KEY:
             errors.append("ZEP_API_KEY not configured")
         return errors
+
+    @classmethod
+    def get_simulation_llm_config(cls) -> dict:
+        """Return LLM config for simulation role.
+        Priority: settings_store > SIMULATION_LLM_* env > LLM_* env"""
+        from .utils.settings_store import get_setting
+        return {
+            "api_key": get_setting('SIMULATION_LLM_API_KEY', cls.LLM_API_KEY),
+            "base_url": get_setting('SIMULATION_LLM_BASE_URL', cls.LLM_BASE_URL),
+            "model": get_setting('SIMULATION_LLM_MODEL_NAME', cls.LLM_MODEL_NAME),
+        }
+
+    @classmethod
+    def get_report_llm_config(cls) -> dict:
+        """Return LLM config for report role.
+        Priority: settings_store > REPORT_LLM_* env > LLM_* env
+
+        Generation parameters:
+          max_tokens         — max output tokens per section (default 4096)
+          temperature        — sampling temperature (default 0.5)
+          tool_result_limit  — max chars per tool response before truncation (default 3000)
+          sim_req_limit      — max chars of simulation_requirement in system prompt (default 800)
+          prev_section_limit — max chars per previous section in context (default 1000)
+        """
+        from .utils.settings_store import get_setting
+        return {
+            "api_key":            get_setting('REPORT_LLM_API_KEY', cls.LLM_API_KEY),
+            "base_url":           get_setting('REPORT_LLM_BASE_URL', cls.LLM_BASE_URL),
+            "model":              get_setting('REPORT_LLM_MODEL_NAME', cls.LLM_MODEL_NAME),
+            "max_tokens":         int(get_setting('REPORT_LLM_MAX_TOKENS', '4096')),
+            "temperature":        float(get_setting('REPORT_LLM_TEMPERATURE', '0.5')),
+            "tool_result_limit":  int(get_setting('REPORT_LLM_TOOL_RESULT_LIMIT', '3000')),
+            "sim_req_limit":      int(get_setting('REPORT_LLM_SIM_REQ_LIMIT', '800')),
+            "prev_section_limit": int(get_setting('REPORT_LLM_PREV_SECTION_LIMIT', '1000')),
+        }
