@@ -348,5 +348,11 @@
   "history.graphBuild": "Graph Build",
   "history.envSetupBtn": "Env Setup",
   "history.analysisReportBtn": "Analysis Report",
-  "history.replayHint": "Step3 \"Start Simulation\" and Step5 \"Deep Interaction\" require a live run and do not support historical replay"
+  "history.replayHint": "Step3 \"Start Simulation\" and Step5 \"Deep Interaction\" require a live run and do not support historical replay",
+  "history.deleteSimulation": "Delete Record",
+  "history.deleteConfirmTitle": "Delete Simulation",
+  "history.deleteConfirmMessage": "Are you sure you want to permanently delete this simulation and all its data?",
+  "history.cancel": "Cancel",
+  "history.confirmDelete": "Delete",
+  "history.deleting": "Deleting..."
 }

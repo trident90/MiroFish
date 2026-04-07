@@ -459,7 +459,16 @@ class SimulationManager:
     def get_simulation(self, simulation_id: str) -> Optional[SimulationState]:
         """Get simulation status"""
         return self._load_simulation_state(simulation_id)
-    
+
+    def delete_simulation(self, simulation_id: str) -> bool:
+        """Delete simulation and all associated files"""
+        sim_dir = os.path.join(self.SIMULATION_DATA_DIR, simulation_id)
+        if not os.path.exists(sim_dir):
+            return False
+        shutil.rmtree(sim_dir)
+        self._simulations.pop(simulation_id, None)
+        return True
+
     def list_simulations(self, project_id: Optional[str] = None) -> List[SimulationState]:
         """List all simulations"""
         simulations = []

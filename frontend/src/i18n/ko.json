@@ -348,5 +348,11 @@
   "history.graphBuild": "그래프 구축",
   "history.envSetupBtn": "환경 설정",
   "history.analysisReportBtn": "분석 보고서",
-  "history.replayHint": "3단계 \"시뮬레이션 시작\"과 5단계 \"심층 상호작용\"은 실시간 실행이 필요하며 기록 재생을 지원하지 않습니다"
+  "history.replayHint": "3단계 \"시뮬레이션 시작\"과 5단계 \"심층 상호작용\"은 실시간 실행이 필요하며 기록 재생을 지원하지 않습니다",
+  "history.deleteSimulation": "기록 삭제",
+  "history.deleteConfirmTitle": "시뮬레이션 삭제",
+  "history.deleteConfirmMessage": "이 시뮬레이션과 모든 관련 데이터를 영구적으로 삭제하시겠습니까?",
+  "history.cancel": "취소",
+  "history.confirmDelete": "삭제",
+  "history.deleting": "삭제 중..."
 }

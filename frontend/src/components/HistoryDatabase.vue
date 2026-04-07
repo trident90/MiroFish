@@ -183,6 +183,39 @@
             <div class="modal-playback-hint">
               <span class="hint-text">{{ t('history.replayHint') }}</span>
             </div>
+            <!-- Delete Button -->
+            <div class="modal-delete-section">
+              <button class="modal-btn btn-delete" @click="confirmDelete">
+                <span class="btn-icon">✕</span>
+                <span class="btn-text">{{ t('history.deleteSimulation') }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Delete Confirmation Dialog -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showDeleteConfirm" class="modal-overlay" @click.self="showDeleteConfirm = false">
+          <div class="modal-content confirm-dialog">
+            <div class="modal-header">
+              <span class="modal-id">{{ t('history.deleteConfirmTitle') }}</span>
+              <button class="modal-close" @click="showDeleteConfirm = false">×</button>
+            </div>
+            <div class="modal-body">
+              <p class="confirm-message">{{ t('history.deleteConfirmMessage') }}</p>
+              <p class="confirm-sim-id">{{ formatSimulationId(pendingDeleteId) }}</p>
+            </div>
+            <div class="modal-actions">
+              <button class="modal-btn btn-cancel" @click="showDeleteConfirm = false">
+                {{ t('history.cancel') }}
+              </button>
+              <button class="modal-btn btn-delete-confirm" @click="executeDelete" :disabled="deleting">
+                {{ deleting ? t('history.deleting') : t('history.confirmDelete') }}
+              </button>
+            </div>
           </div>
         </div>
       </Transition>
@@ -193,7 +226,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, onActivated, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { getSimulationHistory } from '../api/simulation'
+import { getSimulationHistory, deleteSimulation } from '../api/simulation'
 import { useI18n } from '../i18n'
 
 const { t } = useI18n()
@@ -208,6 +241,9 @@ const isExpanded = ref(false)
 const hoveringCard = ref(null)
 const historyContainer = ref(null)
 const selectedProject = ref(null)  // Currently selected project (for modal)
+const showDeleteConfirm = ref(false)
+const pendingDeleteId = ref(null)
+const deleting = ref(false)
 let observer = null
 let isAnimating = false  // Animation lock to prevent flickering
 let expandDebounceTimer = null  // Debounce timer
@@ -434,6 +470,27 @@ const goToReport = () => {
       params: { reportId: selectedProject.value.report_id }
     })
     closeModal()
+  }
+}
+
+const confirmDelete = () => {
+  pendingDeleteId.value = selectedProject.value.simulation_id
+  showDeleteConfirm.value = true
+}
+
+const executeDelete = async () => {
+  if (!pendingDeleteId.value) return
+  deleting.value = true
+  try {
+    await deleteSimulation(pendingDeleteId.value)
+    projects.value = projects.value.filter(p => p.simulation_id !== pendingDeleteId.value)
+    showDeleteConfirm.value = false
+    selectedProject.value = null
+  } catch (error) {
+    console.error('Failed to delete simulation:', error)
+  } finally {
+    deleting.value = false
+    pendingDeleteId.value = null
   }
 }
 
@@ -1339,5 +1396,92 @@ onUnmounted(() => {
   letter-spacing: 0.3px;
   text-align: center;
   line-height: 1.5;
+}
+
+/* Delete section */
+.modal-delete-section {
+  display: flex;
+  justify-content: center;
+  padding: 0 32px 24px;
+  background: #FFFFFF;
+}
+
+.modal-btn.btn-delete {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 18px;
+  background: transparent;
+  border: 1px solid #FECACA;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: #EF4444;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.modal-btn.btn-delete:hover {
+  background: #FEF2F2;
+  border-color: #EF4444;
+}
+
+/* Confirm dialog */
+.confirm-dialog {
+  max-width: 400px;
+}
+
+.confirm-message {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: #374151;
+  margin: 0 0 8px;
+}
+
+.confirm-sim-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.modal-btn.btn-cancel {
+  flex: 1;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: #6B7280;
+  transition: background 0.2s;
+}
+
+.modal-btn.btn-cancel:hover {
+  background: #F9FAFB;
+}
+
+.modal-btn.btn-delete-confirm {
+  flex: 1;
+  padding: 10px;
+  background: #EF4444;
+  border: 1px solid #EF4444;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: #FFFFFF;
+  transition: background 0.2s;
+}
+
+.modal-btn.btn-delete-confirm:hover:not(:disabled) {
+  background: #DC2626;
+}
+
+.modal-btn.btn-delete-confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
